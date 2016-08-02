@@ -17,9 +17,8 @@
 
 -export([avg/1,
          sum/1,
-         min/1
-        %%,
-         %%mul/1,
+         min/1,
+         mul/1
          %%merge/1,
          %%zip/2
         ]).
@@ -60,6 +59,16 @@ sum(Es) when is_list(Es) ->
 
 %%--------------------------------------------------------------------
 %% @doc
+%% Creates a new dataset with each element being the multiple of the
+%% elements of the passed datasets.
+%% @end
+%%--------------------------------------------------------------------
+-spec mul([binary()]) -> binary().
+mul([A, B]) ->
+    mul(A, B).
+
+%%--------------------------------------------------------------------
+%% @doc
 %% Creates a new dataset with each element being the min of the
 %% elements of the passed datasets.
 %% @end
@@ -92,6 +101,9 @@ sum(_A, _B) ->
     erlang:nif_error(nif_library_not_loaded).
 
 sum(_A, _B, _C) ->
+    erlang:nif_error(nif_library_not_loaded).
+
+mul(_A, _B) ->
     erlang:nif_error(nif_library_not_loaded).
 
 min_(_A, _B) ->

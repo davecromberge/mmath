@@ -3,6 +3,9 @@
 
 #include <math.h>
 
+typedef ffloat (*comb_func_t2) (ffloat, ffloat);
+typedef ffloat (*comb_func_t3) (ffloat, ffloat, ffloat);
+
 static int
 load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
@@ -18,7 +21,7 @@ upgrade(ErlNifEnv* env, void** priv, void** old_priv, ERL_NIF_TERM load_info)
 // SUM
 
 static ERL_NIF_TERM
-sum2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+comb2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[], comb_func_t2 f)
 {
   ErlNifBinary a;
   ErlNifBinary b;
@@ -47,7 +50,7 @@ sum2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
   if (count_a == count_b) {
     for (int i = 0; i < count; i++) {
-      target[i] = float_add(vs_a[i], vs_b[i]);
+      target[i] = f(vs_a[i], vs_b[i]);
     }
   } else {
     for (int i = 0; i < count; i++) {
@@ -66,14 +69,14 @@ sum2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
       }
 
       // if neither A nor B are set here we keep a blank
-      target[i] = float_add(last_a, last_b);
+      target[i] = f(last_a, last_b);
     }
   }
   return r;
 }
 
 static ERL_NIF_TERM
-sum3(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+comb3(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[], comb_func_t3 f)
 {
   ErlNifBinary a;
   ErlNifBinary b;
@@ -109,7 +112,7 @@ sum3(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
   if (count_a == count_b && count_b == count_c) {
     for (int i = 0; i < count; i++) {
-      target[i] = float_add3(vs_a[i], vs_b[i], vs_c[i]);
+      target[i] = f(vs_a[i], vs_b[i], vs_c[i]);
     }
   } else {
     for (int i = 0; i < count; i++) {
@@ -128,10 +131,28 @@ sum3(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
       } else {
         last_c.confidence = 0;
       }
-      target[i] = float_add3(last_a, last_b, last_c);
+      target[i] = f(last_a, last_b, last_c);
     }
   }
   return r;
+}
+
+static ERL_NIF_TERM
+sum2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    return comb2(env, argc, argv, float_add);
+}
+
+static ERL_NIF_TERM
+sum3(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    return comb3(env, argc, argv, float_add3);
+}
+
+static ERL_NIF_TERM
+mul2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    return comb2(env, argc, argv, float_mul);
 }
 
 // MIN
@@ -272,6 +293,7 @@ min3(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ErlNifFunc nif_funcs[] = {
   {"sum",      2, sum2},
   {"sum",      3, sum3},
+  {"mul",      2, mul2},
   {"min_",      2, min2},
   {"min_",      3, min3}
 };

@@ -58,6 +58,7 @@ ffloat float_from_double(double v);
 ffloat float_from_binary(int len, char* str);
 
 ffloat float_mul(ffloat v, double m);
+ffloat float_mul2(ffloat a, ffloat b);
 ffloat float_div(ffloat v, double m);
 ffloat float_add(ffloat a, ffloat b);
 ffloat float_add3(ffloat a, ffloat b, ffloat c);

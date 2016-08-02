@@ -11,6 +11,15 @@ float_mul(ffloat v, double m) {
 }
 
 inline ffloat
+float_mul2(ffloat a, ffloat b) {
+  double confidence = (a.confidence + b.confidence) / 2;
+  return (ffloat) {
+    .value = a.value * b.value,
+      .confidence = confidence
+      };
+}
+
+inline ffloat
 float_div(ffloat v, double m) {
   return (ffloat){
     .value = v.value / m,
