@@ -41,6 +41,10 @@ typedef struct {
   if (chunk < 1)                                                        \
     return enif_make_badarg(env);
 
+#define GET_INT(pos, n)                                                 \
+  if (!enif_get_int64(env, argv[pos], &n))                              \
+    return enif_make_badarg(env);                                       \
+
 #define GET_BIN(pos, bin, count, vs)              \
   if (!enif_inspect_binary(env, argv[pos], &bin)) \
     return enif_make_badarg(env);                 \
@@ -82,4 +86,4 @@ ffloat float_max3(ffloat a, ffloat b, ffloat c);
 ffloat float_minc(ffloat v, double c);
 
 ffloat float_const(ffloat a, double b);
-
+ffloat float_first_below(ffloat a, ffloat b, double c);

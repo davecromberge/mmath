@@ -131,17 +131,32 @@ prop_max_len_undefined() ->
                    LRes == BRes)
             end).
 
-prop_std_dev() ->
+prop_stddev() ->
     ?FORALL({{L0, _, B}, N}, {fully_defined_number_array(), pos_int()},
             begin
                 L = realise(L0),
                 LRes = stddev(L, N),
                 BRes = to_list_d(mmath_aggr:stddev(B, N)),
+
                 ?WHENFAIL(
                    io:format(user, "~p =/= ~p~n",
                              [LRes, BRes]),
                    almost_equal(LRes, BRes))
             end).
+
+prop_first_below() ->
+    ?FORALL({{L0, _, B}, N, T}, {defined_number_array(), pos_int(), pos_int()},
+            begin
+                F = T + 0.0,
+                L = realise(L0),
+                LRes = first_below(L, N, F),
+                BRes = to_list_d(mmath_aggr:first_below(B, N, F)),
+                ?WHENFAIL(
+                   io:format(user, "~p =/= ~p~n",
+                             [LRes, BRes]),
+                   almost_equal(LRes, BRes))
+            end).
+
 
 %% prop_combine_sum_r_comp() ->
 %%     ?FORALL({{_, _, B1}, {_, _, B2}}, {fully_defined_number_array(), fully_defined_number_array()},
@@ -266,8 +281,14 @@ max_list(L, N) ->
 empty(L, N) ->
     apply_n(L, N, fun empty_/2).
 
+first_below(L, N, T) ->
+    apply_n(L, N, T, fun first_below_/3).
+
 apply_n(L, N, F) ->
     fix_list([F(SL, N) || SL <- n_length_chunks(L, N)], 0, []).
+
+apply_n(L, N, Const, F) ->
+    fix_list([F(SL, N, Const) || SL <- n_length_chunks(L, N)], 0, []).
 
 empty_(L, N) ->
     lists:sum([1 || {false, _} <- L]) + (N - length(L)).
@@ -292,6 +313,14 @@ min_(L, _N) ->
     case lists:sort(L) of
         [] ->
             undefined;
+        [S | _ ] ->
+            S
+    end.
+
+first_below_(L, _N, T) ->
+    case lists:takewhile(fun(X) -> X =< T end, L) of
+        [] ->
+            0;
         [S | _ ] ->
             S
     end.

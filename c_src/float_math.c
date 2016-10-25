@@ -168,6 +168,31 @@ ffloat float_max(ffloat a, ffloat b) {
   }
 }
 
+ffloat float_first_below(ffloat a, ffloat b, double threshold) {
+    if (a.confidence > 0 && a.value <= threshold) {
+        return a;
+    } else if (b.confidence > 0 && b.value <= threshold) {
+        return b;
+    } else {
+        return (ffloat) {
+          .value = 0,
+          .confidence = 0
+        };
+    }
+}
+
+ffloat float_last_below(ffloat a, ffloat b, double threshold) {
+    if (b.confidence > 0 && b.value <= threshold) {
+        return b;
+    } else if (a.confidence > 0 && a.value <= threshold) {
+        return a;
+    } else {
+        return (ffloat) {
+          .value = 0,
+          .confidence = 0
+        };
+    }
+}
 
 ffloat float_max3(ffloat a, ffloat b, ffloat c) {
   return float_max(a, float_max(b, c));

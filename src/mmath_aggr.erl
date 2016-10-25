@@ -13,6 +13,7 @@
          avg/2,
          min/2,
          max/2,
+         first_below/3,
          variance/2,
          stddev/2,
          mean/2,
@@ -75,6 +76,16 @@ min(_Data, _Count) when _Count > 0 ->
 %%--------------------------------------------------------------------
 -spec max(binary(), pos_integer()) -> binary().
 max(_Data, _Count) when _Count > 0  ->
+    erlang:nif_error(nif_library_not_loaded).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Aggregates a binary by retaining only the first value in a chunk,
+%% that is equal to or below a threshold.
+%% @end
+%%--------------------------------------------------------------------
+-spec first_below(binary(), pos_integer(), float()) -> binary().
+first_below(_Data, _Count, _Threshold) when _Count > 0  ->
     erlang:nif_error(nif_library_not_loaded).
 
 %%--------------------------------------------------------------------

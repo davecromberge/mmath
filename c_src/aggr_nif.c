@@ -2,10 +2,11 @@
 #include "mmath.h"
 
 #include <math.h>
+#include <stdio.h>
 
-typedef ffloat (*aggr_func) (ffloat, ffloat);
+typedef ffloat (*aggr_func2) (ffloat, ffloat);
+typedef ffloat (*aggr_func3) (ffloat, ffloat, double);
 typedef ffloat (*emit_func) (ffloat, double);
-
 
 void print(ffloat* vs, uint32_t count) {
   for (uint32_t i = 0; i < count; i++) {
@@ -27,7 +28,7 @@ upgrade(ErlNifEnv* env, void** priv, void** old_priv, ERL_NIF_TERM load_info)
 }
 
 static ERL_NIF_TERM
-aggr2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[], aggr_func f, emit_func g)
+aggr2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[], aggr_func2 f, emit_func g)
 {
   ErlNifBinary bin;
   ErlNifSInt64 chunk;         // size to be compressed
@@ -87,7 +88,7 @@ aggr2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[], aggr_func f, emit_fun
 }
 
 static ERL_NIF_TERM
-aggr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[], aggr_func f)
+aggr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[], aggr_func2 f)
 {
     return aggr2(env, argc, argv, f, float_const);
 }
@@ -140,12 +141,8 @@ percentile(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
   ERL_NIF_TERM r;
   ffloat* vs;
   ffloat* target;
-  ffloat aggr;          // Aggregator
-  double confidence;
 
-  uint32_t target_i = 0;      // target position
   uint32_t count;
-  uint32_t n;
   uint32_t pos = 0;
   uint32_t target_size;
 
@@ -192,12 +189,81 @@ percentile(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
   return r;
 }
 
+static ERL_NIF_TERM
+aggr3(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[], aggr_func3 f)
+{
+  ErlNifBinary bin;
+  ErlNifSInt64 chunk;         // size to be compressed
+
+  ERL_NIF_TERM r;
+  ffloat* vs;
+  ffloat* target;
+  ffloat aggr;          // Aggregator
+  double confidence;
+
+  uint32_t target_i = 0;      // target position
+  uint32_t count;
+  uint32_t pos = 0;
+  uint32_t target_size;
+  double arg;
+
+  if (argc != 3)
+    return enif_make_badarg(env);
+
+  GET_CHUNK(chunk);
+  GET_BIN(0, bin, count, vs);
+
+  if (!enif_get_double(env, argv[2], &arg))
+    return enif_make_badarg(env);
+
+  target_size = ceil((double) count / chunk) * sizeof(ffloat);
+  if (! (target = (ffloat*) enif_make_new_binary(env, target_size, &r)))
+    return enif_make_badarg(env); // TODO return propper error
+  if (count > 0) {
+    aggr = vs[0];
+    confidence = aggr.confidence;
+    pos = 1;
+
+    for (uint32_t i = 1; i < count; i++, pos++) {
+      if (pos == chunk) {
+        aggr.confidence = confidence / chunk;
+        target[target_i] = aggr;
+        target_i++;
+        aggr = vs[i];
+        confidence = aggr.confidence;
+        pos = 0;
+      } else {
+        confidence += vs[i].confidence;
+        aggr = f(aggr, vs[i], arg);
+      }
+    }
+
+    if (count % chunk) {
+      for (uint32_t i = 0; i < (chunk - (count % chunk)); i++) {
+          aggr = f(aggr, vs[count-1], arg);
+      }
+    }
+
+    aggr.confidence = confidence / chunk;
+    target[target_i] = aggr;
+  }
+
+  return r;
+}
+
+static ERL_NIF_TERM
+first_below(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+  return aggr3(env, argc, argv, float_first_below);
+}
+
 static ErlNifFunc nif_funcs[] = {
   {"min",        2, min},
   {"max",        2, max},
   {"sum",        2, sum},
   {"avg",        2, avg},
-  {"percentile", 3, percentile}
+  {"percentile", 3, percentile},
+  {"first_below", 3, first_below}
 };
 
 // Initialize this NIF library.
