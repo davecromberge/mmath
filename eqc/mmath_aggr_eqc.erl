@@ -438,14 +438,14 @@ last_above_(L, N, T) ->
 
 count_above_(L, N, T) ->
     Fun = fun(InnerL, _N) ->
-        length(lists:filter(fun(X) -> X > T end, lists:reverse(InnerL)))
+        length(lists:filter(fun(X) -> X > T end, InnerL))
     end,
     apply_n(L, N, Fun).
 
 
 count_below_(L, N, T) ->
     Fun = fun(InnerL, _N) ->
-        length(lists:filter(fun(X) -> X < T end, lists:reverse(InnerL)))
+        length(lists:filter(fun(X) -> X < T end, InnerL))
     end,
     apply_n(L, N, Fun).
 
